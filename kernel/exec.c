@@ -10,7 +10,6 @@
 static int loadseg(pde_t *pgdir, uint64 addr, struct inode *ip, uint offset, uint sz);
 
 
-
 int
 exec(char *path, char **argv)
 {
@@ -22,6 +21,26 @@ exec(char *path, char **argv)
   struct proghdr ph;
   pagetable_t pagetable = 0, oldpagetable;
   struct proc *p = myproc();
+
+  // Question 4.1
+  struct vma * saved_stack_vma;
+  struct vma * saved_heap_vma;
+  struct vma * saved_memory_areas;
+
+  acquire(&p-> vma_lock);
+  saved_heap_vma = p->heap_vma;
+  saved_memory_areas = p->memory_areas;
+  saved_stack_vma = p->stack_vma;
+
+  p->memory_areas = 0;
+  p->stack_vma = 0;
+  p->heap_vma = 0;
+
+  release(&p->vma_lock);
+
+  //sbrk(-(uint64)sbrk(0));
+
+  // fin Question 4.1
 
   begin_op(ROOTDEV);
 
@@ -61,6 +80,10 @@ exec(char *path, char **argv)
       printf("exec: program header vaddr + memsz < vaddr\n");
       goto bad;
     }
+    // Question 4.1
+    add_memory_area(p, sz,  PGROUNDUP(ph.vaddr + ph.memsz));
+
+
     if((sz = uvmalloc(pagetable, sz, ph.vaddr + ph.memsz)) == 0){
       printf("exec: uvmalloc failed\n");
       goto bad;
@@ -84,8 +107,15 @@ exec(char *path, char **argv)
   // Allocate two pages at the next page boundary.
   // Use the second as the user stack.
   sz = PGROUNDUP(sz);
+  // Question 4.1
+  add_memory_area(p, sz, sz+ 2*PGSIZE);  //pile
+  add_memory_area(p, sz + 2*PGSIZE, sz + 2*PGSIZE); // tas
+
+
+
   if((sz = uvmalloc(pagetable, sz, sz + 2*PGSIZE)) == 0){
     printf("exec: uvmalloc failed for the stack\n");
+
     goto bad;
   }
   uvmclear(pagetable, sz-2*PGSIZE);
@@ -146,9 +176,24 @@ exec(char *path, char **argv)
   p->tf->sp = sp; // initial stack pointer
   proc_freepagetable(oldpagetable, oldsz);
 
+  // Question 4.1
+  acquire(&p->vma_lock);
+  free_vma(saved_memory_areas);
+  release(&p->vma_lock);
+  // fin Question 4.1
+
   return argc; // this ends up in a0, the first argument to main(argc, argv)
 
  bad:
+
+  // Question 4.1
+  acquire(&p->vma_lock);
+  p->heap_vma = saved_heap_vma;
+  p->memory_areas = saved_memory_areas;
+  p->stack_vma = saved_stack_vma;
+  release(&p->vma_lock);
+
+
   if(pagetable)
     proc_freepagetable(pagetable, sz);
   if(ip){
@@ -182,6 +227,6 @@ loadseg(pagetable_t pagetable, uint64 va, struct inode *ip, uint offset, uint sz
     if(readi(ip, 0, (uint64)pa, offset+i, n) != n)
       return -1;
   }
-  
+
   return 0;
 }

@@ -15,7 +15,7 @@ exec(char *path, char **argv)
 {
   char *s, *last;
   int i, off;
-  uint64 argc, sz, sp, ustack[MAXARG+1], stackbase;
+  uint64 argc, sz, oldsz, sp, ustack[MAXARG+1], stackbase;
   struct elfhdr elf;
   struct inode *ip;
   struct proghdr ph;
@@ -27,7 +27,6 @@ exec(char *path, char **argv)
   struct vma * saved_heap_vma;
   struct vma * saved_memory_areas;
 
-  acquire(&p-> vma_lock);
   saved_heap_vma = p->heap_vma;
   saved_memory_areas = p->memory_areas;
   saved_stack_vma = p->stack_vma;
@@ -36,7 +35,6 @@ exec(char *path, char **argv)
   p->stack_vma = 0;
   p->heap_vma = 0;
 
-  release(&p->vma_lock);
 
   //sbrk(-(uint64)sbrk(0));
 
@@ -46,6 +44,12 @@ exec(char *path, char **argv)
 
   if((ip = namei(path)) == 0){
     end_op(ROOTDEV);
+  
+    //on remet les valeurs des VMAs
+    p->heap_vma = saved_heap_vma;
+    p->memory_areas = saved_memory_areas;
+    p->stack_vma = saved_stack_vma;
+
     return -1;
   }
   ilock(ip);
@@ -80,14 +84,21 @@ exec(char *path, char **argv)
       printf("exec: program header vaddr + memsz < vaddr\n");
       goto bad;
     }
-    // Question 4.1
-    add_memory_area(p, sz,  PGROUNDUP(ph.vaddr + ph.memsz));
-
+    
+    oldsz = sz;
 
     if((sz = uvmalloc(pagetable, sz, ph.vaddr + ph.memsz)) == 0){
       printf("exec: uvmalloc failed\n");
       goto bad;
     }
+
+    //On ne crée la VMA que si de la mémoire a effectivement été allouée
+    //ie : sz a été modifié
+    
+    if (oldsz != sz)
+    	add_memory_area(p, PGROUNDUP(oldsz), PGROUNDUP(ph.vaddr + ph.memsz));
+
+
     if(ph.vaddr % PGSIZE != 0){
       printf("exec: vaddr not page aligned\n");
       goto bad;
@@ -97,20 +108,20 @@ exec(char *path, char **argv)
       goto bad;
     }
   }
+
   iunlockput(ip);
   end_op(ROOTDEV);
   ip = 0;
 
   p = myproc();
-  uint64 oldsz = p->sz;
+  oldsz = p->sz;
 
   // Allocate two pages at the next page boundary.
   // Use the second as the user stack.
   sz = PGROUNDUP(sz);
-  // Question 4.1
-  add_memory_area(p, sz, sz+ 2*PGSIZE);  //pile
-  add_memory_area(p, sz + 2*PGSIZE, sz + 2*PGSIZE); // tas
-
+  // Question 4.1// Question 4.1
+  p->stack_vma = add_memory_area(p, sz, sz+ 2*PGSIZE);  //pile
+  p->heap_vma = add_memory_area(p, sz + 2*PGSIZE, sz + 2*PGSIZE); // tas
 
 
   if((sz = uvmalloc(pagetable, sz, sz + 2*PGSIZE)) == 0){
@@ -177,21 +188,18 @@ exec(char *path, char **argv)
   proc_freepagetable(oldpagetable, oldsz);
 
   // Question 4.1
-  acquire(&p->vma_lock);
   free_vma(saved_memory_areas);
-  release(&p->vma_lock);
   // fin Question 4.1
 
   return argc; // this ends up in a0, the first argument to main(argc, argv)
 
  bad:
+  printf("We are in bad\n");
 
   // Question 4.1
-  acquire(&p->vma_lock);
   p->heap_vma = saved_heap_vma;
   p->memory_areas = saved_memory_areas;
   p->stack_vma = saved_stack_vma;
-  release(&p->vma_lock);
 
 
   if(pagetable)

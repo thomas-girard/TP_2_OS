@@ -8,6 +8,9 @@ Pour rajouter l'auto-testeur du TP2 :
 
     sudo docker pull pwilke/oscorrector
 
+Evaluation :
+    make eval ACT="tp2-act-4-1"
+
 
 ## Question 2.1
 sbrk(0) permet d'obtenir l'adresse du "programm break" (sommet du tas), on en déduit que la fonction permet de désalouer toute la mémoire liée au processus. Cela provoque l'interruption du processus, l'instruction suivante "printf" n'est pas exécutée.
@@ -29,7 +32,13 @@ Voici la taille une fois que ces segments seront chargés en mémoire :
 4.  58 octets
 5.  1224 octets
 
-## Question 4
+## Question 4.2
+
+Il y a 5 VMAs : les 3 premières correspondent aux 5 segments du fichier ELF, et les 2 dernières aux pile et tas
+
+## Question 4.3
+
+
 
 
 

@@ -367,15 +367,30 @@ int growproc(long n) {
   uint64 sz;
   struct proc *p = myproc();
 
+  // Question 4.4
+  uint64 fin_tas = p->heap_vma->va_end;
+
+  //uint64 va_begin = p->heap_vma->va_begin; //du tas !
+  //uint64 va_end = p->heap_vma->va_end; // adresse fin du tas
+
+  uint64 nouvelle_adresse = fin_tas + n;
+  p->heap_vma->va_end = nouvelle_adresse;
+
+
+  if  (p->heap_vma->va_begin > p->heap_vma->va_end || (p->heap_vma->va_end - p->heap_vma->va_begin >= HEAP_THRESHOLD)) {
+    p->heap_vma->va_end = fin_tas;
+    return -1;
+  }
+
   sz = p->sz;
   if(n > 0){
-    if((sz = uvmalloc(p->pagetable, sz, sz + n)) == 0) {
-      return -1;
-    }
+    // if((sz = uvmalloc(p->pagetable, sz, sz + n)) == 0) {
+    //   return -1;
+    // }
   } else if(n < 0){
     sz = uvmdealloc(p->pagetable, sz, sz + n);
   }
-  p->sz = sz;
+  p->sz = nouvelle_adresse;
   return 0;
 }
 

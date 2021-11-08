@@ -138,7 +138,7 @@ kvmpa(uint64 va)
   uint64 off = va % PGSIZE;
   pte_t *pte;
   uint64 pa;
-  
+
   pte = walk(kernel_pagetable, va, 0);
   if(pte == 0)
     panic("kvmpa");
@@ -345,7 +345,7 @@ void
 uvmclear(pagetable_t pagetable, uint64 va)
 {
   pte_t *pte;
-  
+
   pte = walk(pagetable, va, 0);
   if(pte == 0)
     panic("uvmclear");
@@ -377,7 +377,24 @@ int load_from_file(char* file,
   }
 
 int do_allocate(pagetable_t pagetable, struct proc* p, uint64 addr){
+  //return 0;
+  pte_t* pointeur = walk(pagetable, addr, 0);
+  if (pointeur == 0) {
+    return ENOMEM;
+  }
+  uint64 pointeur_flag = PTE_FLAGS(*pointeur);
+  if ((pointeur_flag & PTE_V) == 0) {
+    return ENOMEM;
+  }
+
+  if ((pointeur_flag & PTE_U) == 0) {
+    return EBADPERM;
+  }
   return 0;
+
+
+
+
 }
 
 int do_allocate_range(pagetable_t pagetable, struct proc* p, uint64 addr, uint64 len){

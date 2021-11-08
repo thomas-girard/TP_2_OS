@@ -36,7 +36,11 @@ Voici la taille une fois que ces segments seront chargés en mémoire :
 
 Il y a 5 VMAs : les 3 premières correspondent aux 5 segments du fichier ELF, et les 2 dernières aux pile et tas
 
-## Question 4.3
+## Question 4.4
+On essaye d'accéder à des pages qui ne sont pas alloués d'où l'erreur
+
+
+
 
 
 

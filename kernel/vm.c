@@ -377,22 +377,50 @@ int load_from_file(char* file,
   }
 
 int do_allocate(pagetable_t pagetable, struct proc* p, uint64 addr){
-  //return 0;
-  pte_t* pointeur = walk(pagetable, addr, 0);
-  if (pointeur == 0) {
-    return ENOMEM;
-  }
-  uint64 pointeur_flag = PTE_FLAGS(*pointeur);
-  if ((pointeur_flag & PTE_V) == 0) {
-    return ENOMEM;
+
+  struct vma* vma_check = get_memory_area(p, addr);
+  if (vma_check == 0) {
+    return ENOVMA;
   }
 
-  if ((pointeur_flag & PTE_U) == 0) {
+  pte_t* pointeur = walk(pagetable, addr, 0);
+
+  uint64 pointeur_flag = PTE_FLAGS(*pointeur);
+
+
+  if (pointeur != 0 && (pointeur_flag & PTE_V) != 0 && (pointeur_flag & PTE_U) != 0) {
+    return 0;
+  }
+  if (pointeur != 0 && (pointeur_flag & PTE_U) == 0 && (pointeur_flag & PTE_V) != 0) {
     return EBADPERM;
   }
+
+  void * adresse_physique = kalloc();
+
+  if (adresse_physique == 0 )
+  {
+    return ENOMEM;
+  }
+  int retour_mappages = mappages(pagetable, addr, PGSIZE, (uint64) adresse_physique, PTE_R | PTE_W | PTE_X | PTE_U);
+
+  if (retour_mappages == -1) {
+    kfree(adresse_physique);
+    return EMAPFAILED;
+  }
+
+
+  // if (pointeur == 0) {
+  //   return ENOMEM;
+  // }
+  // uint64 pointeur_flag = PTE_FLAGS(*pointeur);
+  // if ((pointeur_flag & PTE_V) == 0) {
+  //   return ENOMEM;
+  // }
+
+  // if ((pointeur_flag & PTE_U) == 0) {
+  //   return EBADPERM;
+  // }
   return 0;
-
-
 
 
 }

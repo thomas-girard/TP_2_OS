@@ -39,6 +39,10 @@ Il y a 5 VMAs : les 3 premières correspondent aux 5 segments du fichier ELF, et
 ## Question 4.4
 On essaye d'accéder à des pages qui ne sont pas alloués d'où l'erreur
 
+## Question 4.7
+Il y a encore des erreurs page_fault. scause nous donne le type d'erreur (en l'occurence page_fault), stval nous donne les adresses auxquelles on essaie d'écrire et sepc nous donne les adresses des instructions qui ont provoqués l'erreur
+
+
 
 
 

@@ -426,6 +426,20 @@ int do_allocate(pagetable_t pagetable, struct proc* p, uint64 addr){
 }
 
 int do_allocate_range(pagetable_t pagetable, struct proc* p, uint64 addr, uint64 len){
+
+  for (uint64 i = addr; i < addr+len; i++ ) {
+
+    if (i%PGSIZE == 0) {
+      acquire(&p->vma_lock);
+      int retour =  do_allocate(pagetable, p, i);
+      release(&p->vma_lock);
+      if (retour < 0) {
+        return retour;
+      }
+    }
+  }
+
+
   return 0;
 }
 

@@ -42,6 +42,14 @@ On essaye d'accéder à des pages qui ne sont pas alloués d'où l'erreur
 ## Question 4.7
 Il y a encore des erreurs page_fault. scause nous donne le type d'erreur (en l'occurence page_fault), stval nous donne les adresses auxquelles on essaie d'écrire et sepc nous donne les adresses des instructions qui ont provoqués l'erreur
 
+## Question 4.8
+Le tas est définis entre [0x0000000000006000; 0x0000000000016000[. La taille du tas est donc de 10 000 en hexa, donc 65536 octet, soit 64 ko.
+
+Il y a 3 pages associés au tas et qui sont dans l'intervalle [0x0000000000006000; 0x0000000000016000[ du tas.
+
+## Question 4.9
+C'est l'appel système write() qui échoue dans le test
+
 
 
 

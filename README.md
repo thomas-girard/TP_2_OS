@@ -9,7 +9,7 @@ Pour rajouter l'auto-testeur du TP2 :
     sudo docker pull pwilke/oscorrector
 
 Evaluation :
-    make eval ACT="tp2-act-4-1"
+    sudo make eval ACT="tp2-act-4-1"
 
 
 ## Question 2.1
@@ -50,6 +50,13 @@ Il y a 3 pages associés au tas et qui sont dans l'intervalle [0x000000000000600
 ## Question 4.9
 C'est l'appel système write() qui échoue dans le test
 
+# Question 4.12
+Pas réussi pour l'instant (KO booted) => à compléter plus tard
+
+# Question 5.1
+On constate que naivefib  ne marche plus à partir de 17. Ce programme sert à calculer le n-ième terme de la suite de Fibonacci de manière récursive. A partir du 17ème terme, la pile n'est plus assez grande pour stocker les appels récursifs
+
+# Question 5.2
 
 
 
